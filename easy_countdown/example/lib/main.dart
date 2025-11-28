@@ -57,13 +57,15 @@ class _MyHomePageState extends State<MyHomePage> {
             EasyCountdown(
               controller: _countdownController,
               config: CountDownConfig(
-                duration: Duration(seconds: 10000),
+                duration: Duration(seconds: 10),
                 autoPlay: true,
                 onDone: () {
                   print('done');
                 },
               ),
               builder: (context, value, status) {
+                print('builder status: $status');
+
                 return Text(CountdownFormatUtils.formatHHmmss(value));
               },
             ),

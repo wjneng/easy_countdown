@@ -39,7 +39,10 @@ class EasyCountdownController {
   /// 手动设置剩余时长
   void updateRemainingDuration(Duration duration) {
     assert(duration.inMilliseconds >= 0, "剩余时长不能为负数");
-    setRemainingDuration?.call(duration);
+    // 确保设置的时长不为负
+    final validDuration =
+        duration.inMilliseconds < 0 ? Duration.zero : duration;
+    setRemainingDuration?.call(validDuration);
   }
 
   /// 获取当前剩余时长（实时同步）

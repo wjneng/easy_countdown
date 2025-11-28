@@ -64,32 +64,29 @@ class _EasyCountdownState extends State<EasyCountdown> {
   void _updateRemainingDuration(Duration duration) {
     if (mounted) {
       setState(() {
-        _remainingDuration = duration;
+        // 确保剩余时长不为负
+        _remainingDuration =
+            duration.inMilliseconds < 0 ? Duration.zero : duration;
         _totalDuration = widget.config.resetToOriginal
             ? widget.config.duration
             : _totalDuration;
         // 同步更新状态
         if (_remainingDuration.inMilliseconds == 0) {
           _status = CountdownStatus.completed;
-        } else if (_remainingDuration.inMilliseconds < 0 &&
-            widget.config.allowNegative) {
-          _status = CountdownStatus.overtime;
         }
         _syncControllerState();
       });
     }
   }
 
+// 修改开始倒计时方法
   void _startCountdown() {
-    if (_status == CountdownStatus.completed && !widget.config.allowNegative) {
+    if (_status == CountdownStatus.completed) {
       _resetCountdown();
     }
 
     _timer?.cancel();
-    _status =
-        _remainingDuration.inMilliseconds < 0 && widget.config.allowNegative
-            ? CountdownStatus.overtime
-            : CountdownStatus.running;
+    _status = CountdownStatus.running;
 
     _timer = Timer.periodic(widget.config.interval, (timer) {
       if (!mounted) {
@@ -98,59 +95,39 @@ class _EasyCountdownState extends State<EasyCountdown> {
       }
 
       final newRemaining = _remainingDuration - widget.config.interval;
-      _remainingDuration = widget.config.allowNegative
-          ? newRemaining
-          : Duration(milliseconds: math.max(0, newRemaining.inMilliseconds));
+      // 确保不会出现负数
+      _remainingDuration =
+          Duration(milliseconds: math.max(0, newRemaining.inMilliseconds));
 
       // 状态更新逻辑
-      if (!widget.config.allowNegative) {
-        if (_remainingDuration.inMilliseconds <= 0) {
-          _remainingDuration = Duration.zero;
-          _status = CountdownStatus.completed;
-          _stopCountdown(isUpdate: true);
-          widget.config.onDone?.call();
-        } else {
-          _status = CountdownStatus.running;
-        }
+      if (_remainingDuration.inMilliseconds <= 0) {
+        _remainingDuration = Duration.zero;
+        _status = CountdownStatus.completed;
+        _stopCountdown(isUpdate: true);
+        widget.config.onDone?.call();
       } else {
-        _status = _remainingDuration.inMilliseconds > 0
-            ? CountdownStatus.running
-            : CountdownStatus.overtime;
+        _status = CountdownStatus.running;
       }
-      _syncControllerState();
 
+      _syncControllerState();
       _updateProgress();
       setState(() {});
     });
     _syncControllerState();
   }
 
-  void _stopCountdown({bool isUpdate = false}) {
-    _timer?.cancel();
-    _timer = null;
-    if (_status != CountdownStatus.completed &&
-        _status != CountdownStatus.overtime) {
-      _status = CountdownStatus.paused;
-    }
-    _syncControllerState();
-
-    if (!isUpdate) {
-      _updateProgress();
-    }
-    setState(() {});
-  }
-
+// 修改重置倒计时方法
   void _resetCountdown() {
     if (mounted) {
       setState(() {
-        _remainingDuration =
-            widget.config.resetToOriginal ? _totalDuration : _remainingDuration;
+        _remainingDuration = widget.config.resetToOriginal
+            ? _totalDuration
+            : (_remainingDuration.inMilliseconds < 0
+                ? Duration.zero
+                : _remainingDuration);
         _status = _remainingDuration.inMilliseconds == 0
             ? CountdownStatus.completed
-            : (_remainingDuration.inMilliseconds < 0 &&
-                    widget.config.allowNegative
-                ? CountdownStatus.overtime
-                : CountdownStatus.idle);
+            : CountdownStatus.idle;
         _syncControllerState();
       });
 
@@ -162,6 +139,20 @@ class _EasyCountdownState extends State<EasyCountdown> {
         _stopCountdown();
       }
     }
+  }
+
+  void _stopCountdown({bool isUpdate = false}) {
+    _timer?.cancel();
+    _timer = null;
+    if (_status != CountdownStatus.completed) {
+      _status = CountdownStatus.paused;
+    }
+    _syncControllerState();
+
+    if (!isUpdate) {
+      _updateProgress();
+    }
+    setState(() {});
   }
 
   _updateProgress() {
@@ -187,8 +178,11 @@ class _EasyCountdownState extends State<EasyCountdown> {
       _totalDuration = widget.config.duration.inMilliseconds < 0
           ? Duration.zero
           : widget.config.duration;
-      _remainingDuration =
-          widget.config.resetToOriginal ? _totalDuration : _remainingDuration;
+      _remainingDuration = widget.config.resetToOriginal
+          ? _totalDuration
+          : (_remainingDuration.inMilliseconds < 0
+              ? Duration.zero
+              : _remainingDuration);
       _stopCountdown();
 
       if (widget.controller != null) {
@@ -209,10 +203,7 @@ class _EasyCountdownState extends State<EasyCountdown> {
 
       _status = _remainingDuration.inMilliseconds == 0
           ? CountdownStatus.completed
-          : (_remainingDuration.inMilliseconds < 0 &&
-                  widget.config.allowNegative
-              ? CountdownStatus.overtime
-              : CountdownStatus.idle);
+          : CountdownStatus.idle;
       _syncControllerState();
     }
   }
@@ -232,7 +223,7 @@ class _EasyCountdownState extends State<EasyCountdown> {
 
   @override
   Widget build(BuildContext context) {
-    if (_remainingDuration.inMilliseconds < 0 && !widget.config.allowNegative) {
+    if (_remainingDuration.inMilliseconds < 0) {
       _remainingDuration = Duration.zero;
       _status = CountdownStatus.completed;
       _syncControllerState();

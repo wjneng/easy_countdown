@@ -6,9 +6,9 @@ EasyCountdown 是一款轻量级、高可定制的 Flutter 倒计时组件，支
 
 # 二、核心特性
 
-- **多状态管理**：支持 `idle`（未开始）、`running`（运行中）、`paused`（已暂停）、`completed`（正常结束）、`overtime`（超时，允许负数时）五种状态，覆盖各类倒计时场景。
+- **多状态管理**：支持 `idle`（未开始）、`running`（运行中）、`paused`（已暂停）、`completed`（结束）四种状态，覆盖各类倒计时场景。
 
-- **灵活配置**：可自定义倒计时总时长、刷新间隔、是否自动播放、是否允许负数倒计时、重置时是否恢复初始时长等。
+- **灵活配置**：可自定义倒计时总时长、刷新间隔、是否自动播放、重置时是否恢复初始时长等。
 
 - **控制器 API**：通过 `EasyCountdownController` 实现开始、暂停、重置、手动更新剩余时长等操作，并支持实时进度回调。
 
@@ -65,9 +65,8 @@ void dispose() {
 |duration|Duration|必填|倒计时总时长（必须非负）|
 |autoPlay|bool|true|是否初始化后自动开始倒计时|
 |interval|Duration|Duration(seconds:1)|倒计时刷新间隔|
-|allowNegative|bool|false|是否允许倒计时为负数（开启后结束状态为 `overtime`）|
 |resetToOriginal|bool|true|重置时是否恢复初始时长（false 则保留当前剩余时长）|
-|onDone|VoidCallback?|null|倒计时正常结束（`completed` 状态）时的回调|
+|onDone|VoidCallback?|null|倒计时结束（`completed` 状态）时的回调|
 ##  EasyCountdownController（倒计时控制器）
 
 用于控制倒计时的状态和行为，支持以下方法和属性：
@@ -82,17 +81,3 @@ void dispose() {
 |remainingDuration|Duration|获取当前剩余时长（实时同步）|
 |status|CountdownStatus|获取当前倒计时状态（实时同步）|
 |dispose()|void|销毁控制器，释放资源（必须在组件 dispose 时调用）|
-## CountdownStatus（倒计时状态枚举）
-
-定义倒计时的所有可能状态：
-
-- `idle`：未开始（初始化后未启动或重置后未自动播放）
-
-- `running`：运行中
-
-- `paused`：已暂停
-
-- `completed`：正常结束（时长归零时，`allowNegative` 为 false）
-
-- `overtime`：超时（时长为负时，`allowNegative` 为 true）
-
